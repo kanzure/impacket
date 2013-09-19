@@ -76,7 +76,6 @@ class ServiceInstall():
     def createService(self, handle, share, path):
         print "[*] Creating service %s on %s....." % (self.__service_name, self.connection.getRemoteHost())
 
-
         # First we try to open the service in case it exists. If it does, we remove it.
         try:
             resp = self.rpcsvc.OpenServiceW(handle, self.__service_name.encode('utf-16le'))
