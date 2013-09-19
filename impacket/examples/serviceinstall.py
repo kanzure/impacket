@@ -94,7 +94,7 @@ class ServiceInstall():
         print "[*] Creating service %s on %s....." % (self.__service_name, self.connection.getRemoteHost())
 
         # delete the service if it already exists
-        resp = self.check_service_exists(handle, self.__service_name):
+        resp = self.check_service_exists(handle, self.__service_name)
         if resp:
             self.rpcsvc.DeleteService(resp['ContextHandle'])
             self.rpcsvc.CloseServiceHandle(resp['ContextHandle'])
