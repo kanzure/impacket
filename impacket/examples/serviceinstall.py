@@ -200,7 +200,7 @@ class ServiceInstall():
 
                 if self.share in ["", None]:
                     self.share = self.findWritableShare(shares, return_first=True)
-                elif self.share not in shares:
+                elif False: # self.share not in shares:
                     exc = Exception(
                         "share {0} not in discovered shares {1}".format(self.share, shares)
                     )
