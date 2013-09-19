@@ -24,12 +24,14 @@ from impacket import smb,smb3
 from impacket.smbconnection import *
 
 class ServiceInstall():
-    def __init__(self, SMBObject, exeFile, service_name=None, filename=None):
+    def __init__(self, SMBObject, exeFile, service_name=None, filename=None, share=None):
         """
         @param service_name: the name that the service will use when running on
         Windows.
         @param filename: save the upload exe with this filename on the remote
         machine.
+        @param share: which share to write to (None/False means "find the first
+        writable share")
         """
 
         if not service_name:
@@ -50,7 +52,7 @@ class ServiceInstall():
         else:
             self.connection = SMBObject
 
-        self.share = ''
+        self.share = share
 
     def getShare(self):
         return self.share
@@ -184,9 +186,29 @@ class ServiceInstall():
             serviceCreated = False
             # Do the stuff here
             try:
-                # Let's get the shares
                 shares = self.getShares()
-                self.share = self.findWritableShare(shares)
+
+                if self.share in ["", None]:
+                    self.share = self.findWritableShare(shares, return_first=True)
+                elif self.share not in shares:
+                    exc = Exception(
+                        "share {0} not in discovered shares {1}".format(self.share, shares)
+                    )
+                    exc.shares = shares
+                    raise exc
+                elif not self.is_share_writable(self.share):
+                    # find writable shares for the upcoming exception
+                    writable_shares = self.findWritableShare(shares, return_first=False)
+                    exc = Exception(
+                        "share {0} is not writable, try {1}".format(self.share, writable_shares)
+                    )
+                    exc.writable_shares = writable_shares
+                    exc.shares = shares
+                    raise exc
+                else:
+                    # share exists and is writable.. looks good to me.
+                    pass
+
                 res = self.copy_file(self.__exeFile ,self.share,self.__binary_service_name)
                 fileCopied = True
                 svcManager = self.openSvcManager()
