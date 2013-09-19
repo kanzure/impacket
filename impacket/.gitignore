@@ -1,0 +1,6 @@
+# precompiled python files
+*.pyc
+
+# swap files for editors
+.*.sw*
+*~
