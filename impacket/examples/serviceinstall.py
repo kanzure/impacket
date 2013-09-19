@@ -24,7 +24,7 @@ from impacket import smb,smb3
 from impacket.smbconnection import *
 
 class ServiceInstall():
-    def __init__(self, SMBObject, exeFile, service_name=None, filename=None, share=None):
+    def __init__(self, SMBObject, exeFile=None, service_name=None, filename=None, share=None, do_upload=True):
         """
         @param service_name: the name that the service will use when running on
         Windows.
@@ -32,6 +32,7 @@ class ServiceInstall():
         machine.
         @param share: which share to write to (None/False means "find the first
         writable share")
+        @param do_upload: should the file (provided by exeFile) be uploaded?
         """
 
         if not service_name:
@@ -44,6 +45,7 @@ class ServiceInstall():
         self.__service_name = service_name
         self.__binary_service_name = filename
         self.__exeFile = exeFile
+        self.do_upload = do_upload
 
         # We might receive two different types of objects, always end up
         # with a SMBConnection one
@@ -217,7 +219,9 @@ class ServiceInstall():
                     # share exists and is writable.. looks good to me.
                     pass
 
-                res = self.copy_file(self.__exeFile ,self.share,self.__binary_service_name)
+                if self.do_upload:
+                    res = self.copy_file(self.__exeFile ,self.share,self.__binary_service_name)
+
                 fileCopied = True
                 svcManager = self.openSvcManager()
                 if svcManager != 0:
