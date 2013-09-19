@@ -17,16 +17,30 @@
 #
 
 import random
+import string
+
 from impacket.dcerpc import srvsvc, dcerpc, svcctl, transport
 from impacket import smb,smb3
 from impacket.smbconnection import *
-import string
 
 class ServiceInstall():
-    def __init__(self, SMBObject, exeFile):
+    def __init__(self, SMBObject, exeFile, service_name=None, filename=None):
+        """
+        @param service_name: the name that the service will use when running on
+        Windows.
+        @param filename: save the upload exe with this filename on the remote
+        machine.
+        """
+
+        if not service_name:
+            service_name = ''.join([random.choice(string.letters) for i in range(4)])
+
+        if not filename:
+            filename = ''.join([random.choice(string.letters) for i in range(8)]) + '.exe'
+
         self._rpctransport = 0
-        self.__service_name = ''.join([random.choice(string.letters) for i in range(4)])
-        self.__binary_service_name = ''.join([random.choice(string.letters) for i in range(8)]) + '.exe'
+        self.__service_name = service_name
+        self.__binary_service_name = filename
         self.__exeFile = exeFile
 
         # We might receive two different types of objects, always end up
