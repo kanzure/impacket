@@ -132,22 +132,47 @@ class ServiceInstall():
             raise
         fh.close()
 
-    def findWritableShare(self, shares):
-        # Check we can write a file on the shares, stop in the first one
+    def findWritableShare(self, shares, return_first=True):
+        """
+        Check we can write a file on the shares, stop in the first one.
+
+        @param return_first: return the name of the first writable share.
+        Default is True. When set to false, the function returns a list of
+        writable shares.
+        """
+        writable = []
         for i in shares:
             if i['Type'] == smb.SHARED_DISK or i['Type'] == smb.SHARED_DISK_HIDDEN:
-               share = i['NetName'].decode('utf-16le')[:-1]
-               try:
-                   self.connection.createDirectory(share,'BETO')
-               except:
-                   # Can't create, pass
-                   print '[!] No written share found, aborting...'
-                   raise
-               else:
-                   print '[*] Found writable share %s' % share
-                   self.connection.deleteDirectory(share,'BETO')
-                   return str(share)
-        return None
+                share = i['NetName'].decode('utf-16le')[:-1]
+                if self.is_share_writable(share):
+                    if return_first:
+                        return str(share)
+                    else:
+                        writable.append(share)
+        if return_first:
+            return None # preserve previous behavior of function
+        else:
+            return writable
+
+    def is_share_writable(self, share, dirname="testaccesspermissions"):
+        """
+        Check whether or not a share is writable. The testing method is based
+        on creating a directory. The directory is removed if the method is
+        successful.
+
+        @param dirname: the name of the directory to attempt to create
+        """
+        try:
+            print "Checking if share {0} is writable".format(share)
+            self.connection.createDirectory(share, dirname)
+        except:
+            # Can't create, pass
+            print "Share {0} is not writable".format(share)
+            return False
+        else:
+            print "[*] Found writable share {0}".format(share)
+            self.connection.deleteDirectory(share, dirname)
+            return True
 
     def install(self):
         if self.connection.isGuestSession():
