@@ -73,20 +73,29 @@ class ServiceInstall():
             print "[!] Error requesting shares on %s, aborting....." % (self.connection.getRemoteHost())
             raise
 
+    def check_service_exists(self, handle, service_name):
+        """
+        Attempts to open a service to check if it exists on the remote machine.
+        """
+        service_name_fmtd = service_name.encode("utf-16le")
+        try:
+            resp = self.rpcsvc.OpenServiceW(handle, service_name_fmtd)
+        except Exception as exc:
+            if exc.get_error_code() == svcctl.ERROR_SERVICE_DOES_NOT_EXISTS:
+                return False
+            else:
+                # unrelated exception
+                raise exc
+        else:
+            # service was opened, therefore it exists
+            return resp
+
     def createService(self, handle, share, path):
         print "[*] Creating service %s on %s....." % (self.__service_name, self.connection.getRemoteHost())
 
-        # First we try to open the service in case it exists. If it does, we remove it.
-        try:
-            resp = self.rpcsvc.OpenServiceW(handle, self.__service_name.encode('utf-16le'))
-        except Exception, e:
-            if e.get_error_code() == svcctl.ERROR_SERVICE_DOES_NOT_EXISTS:
-                # We're good, pass the exception
-                pass
-            else:
-                raise
-        else:
-            # It exists, remove it
+        # delete the service if it already exists
+        resp = self.check_service_exists(handle, self.__service_name):
+        if resp:
             self.rpcsvc.DeleteService(resp['ContextHandle'])
             self.rpcsvc.CloseServiceHandle(resp['ContextHandle'])
 
